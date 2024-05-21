@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <title>simpleheat VR demo</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="../simpleheat.js"></script>
+    <script src="data.js"></script>
+  </head>
+  <body>
+    <a-scene vr-mode-ui="enabled: true">
+      <a-entity position="0 1.6 0">
+        <a-camera></a-camera>
+      </a-entity>
+
+      <a-entity class="container" position="0 0 -3">
+        <a-plane width="10" height="6" color="#FFFFFF"></a-plane>
+
+        <a-entity class="options" position="0 2 0">
+          <a-entity>
+            <a-text value="Radius" position="-2 0 0"></a-text>
+            <input type="range" id="radius" value="25" min="10" max="50" />
+          </a-entity>
+
+          <a-entity>
+            <a-text value="Blur" position="-2 0.5 0"></a-text>
+            <input type="range" id="blur" value="15" min="10" max="50" />
+          </a-entity>
+        </a-entity>
+      </a-entity>
+
+      <a-plane id="canvas" width="10" height="6" position="0 0 -3"></a-plane>
+    </a-scene>
+
+    <script>
+      window.requestAnimationFrame =
+        window.requestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.msRequestAnimationFrame;
+
+      function get(id) {
+        return document.getElementById(id);
+      }
+
+      var heat = simpleheat("canvas").data(data).max(18),
+        frame;
+
+      function draw() {
+        console.time("draw");
+        heat.draw();
+        console.timeEnd("draw");
+        frame = null;
+      }
+
+      draw();
+
+      get("canvas").addEventListener("mousemove", function (e) {
+        var canvas = document.querySelector("a-plane#canvas");
+        var rect = canvas.getBoundingClientRect();
+        var x =
+          ((e.clientX - rect.left) / rect.width) * canvas.getAttribute("width");
+        var y =
+          ((e.clientY - rect.top) / rect.height) *
+          canvas.getAttribute("height");
+        heat.add([x, y, 1]);
+        frame = frame || window.requestAnimationFrame(draw);
+      });
+
+      var radius = get("radius"),
+        blur = get("blur"),
+        changeType = "oninput" in radius ? "oninput" : "onchange";
+
+      radius[changeType] = blur[changeType] = function (e) {
+        heat.radius(+radius.value, +blur.value);
+        frame = frame || window.requestAnimationFrame(draw);
+      };
+    </script>
+  </body>
+</html>
